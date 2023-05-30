@@ -1,0 +1,105 @@
+### 라이브러리 설치, 분석 대상 데이터 가져오기
+### 1) 라이브러리 설치
+import pandas as pd
+pd.set_option('display.width', 180)
+pd.set_option('display.max_columns', 15)
+import warnings
+warnings.filterwarnings('ignore')
+
+### 2) 데이터 가져오기
+df = pd.read_csv('cancer_140.csv')
+print(len(df))
+print('------------------------------------------------------------------------')
+print(df.head(3))
+print('------------------------------------------------------------------------')
+print(df['Y_N'].value_counts())
+
+### 전처리 (Preprocessing)
+### 3) Y_N 활용해서 class( 0 또는 1) 컬럼 만들기
+import numpy as np
+df['class'] = np.where(df['Y_N'] == 'Positive', 0, 1)
+print(df.head(3))
+print('------------------------------------------------------------------------')
+print(df['class'].value_counts())
+### 4) X(독립변수) , y(종속변수) 분리
+X = df.loc[: ,['Width','Height','Hardness','Color']]
+y = df['class']
+
+### 5) 분석 모형 가져오기 , 분석 모델링
+from sklearn.linear_model import LogisticRegression
+lr_model = LogisticRegression() # LogisticRegression 객체 생성 , lr_model이라는 분류 모형 생성
+lr_model.fit(X, y) # lr_model 분류 모형에 데이터 반영
+
+### 6) 분석 모델링 결과 확인
+print(lr_model.score(X, y)) # lr_model 데이터 반영 결과 - (평균)정확도
+print('------------------------------------------------------------------------')
+print(lr_model.predict_proba(X)[:5, :]) # 확률 추정.
+
+### 7) 분석 모델링 결과 확인
+print(lr_model.intercept_) # 절편
+print('------------------------------------------------------------------------')
+print(lr_model.coef_) # 기울기
+
+### 8) 분석 모델링 결과 기울기 확인
+print( type(lr_model.coef_ ) )
+print('------------------------------------------------------------------------')
+df1 = (pd.DataFrame(lr_model.coef_)).T
+print(df1)
+
+### 8) 분석 모델링 결과 분류에 영향을 준 정도 확인
+print(type(X.columns ))
+print('------------------------------------------------------------------------')
+df2 = pd.DataFrame(X.columns)
+print(df2)
+pd.concat([df2, df1], axis = 1)
+
+#### 데이터를 나누어 검증 - Train & Test
+### 9) 데이터 나누는 라이브러리 가져오기
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split( X, y
+,test_size =0.2 # 8:2
+, random_state= 1234) # 반복시 같은 값이 나오도록 하는 기준
+print(len(X))
+print('---------------------------------------------------------------------')
+print(X_train.shape, '---',y_train.shape)
+print('---------------------------------------------------------------------')
+print(X_test.shape, '---',y_test.shape)
+
+### 10) 분석 모델링
+lr_model.fit(X_train, y_train) # 3)에서 만든 lr_model 분류 모형에 데이터 반영
+print(lr_model.score(X_train, y_train)) # lr_model 데이터 반영 결과 - (평균)정확도
+print('---------------------------------------------------------------------')
+print(lr_model.score(X_test, y_test)) # lr_model 데이터 반영 결과 - (평균)정확도
+#### Test 데이터로 예측을 해보자
+
+### 11) 예측
+y_pred = lr_model.predict(X_test)
+y_pred
+
+### 12) 데이터 분석 라이브러리 가져오기
+from sklearn import metrics
+lr_model_cf = metrics.confusion_matrix(y_test, y_pred)
+print(lr_model_cf)
+
+### 13) 데이터 분석 라이브러리 가져오기
+from sklearn.metrics import roc_curve
+import matplotlib.pyplot as plt
+plt.figure( figsize=(6,6) )
+fpr, tpr, thresholds = roc_curve(y_test, y_pred)
+plt.plot(fpr, tpr)
+plt.show()
+
+### 새로운 데이터로 예측
+df_new = pd.read_csv('cancer_10.csv' )
+print(df_new.head(3))
+#X_new = df_new.loc[: ,['Width','Height','Hardness','Color']]
+X_new = df_new.drop(columns=['Patient_Number', 'CheckDate'])
+print(X_new.head(3))
+y_pred = lr_model.predict(X_new)
+y_pred
+
+### 한건만 입력
+y_pred = lr_model.predict([[5.1, 3.5, 1.4, 0.2 ]])
+y_pred
+y_pred = lr_model.predict([[5.8, 2.7, 5.1, 1.9 ]])
+y_pred
