@@ -1,0 +1,43 @@
+### 라이브러리 설치, 분석 대상 데이터 가져오기
+### 1) 라이브러리 설치
+import pandas as pd
+pd.set_option('display.width', 180)
+pd.set_option('display.max_columns', 15)
+import warnings
+warnings.filterwarnings('ignore')
+
+### 2) 데이터 가져오기
+df = pd.read_csv('Outpatient_Satisfaction_Score.csv')
+print(len(df))
+print('------------------------------------------------------------------------')
+print(df.head(3))
+
+### 전처리 (Preprocessing)
+print(df.isnull().sum())
+X = df["X"]
+y = df["Y"]
+
+### 5) 분석 모형 가져오기 , 분석 모델링
+from sklearn.linear_model import LinearRegression
+lreg = LinearRegression()
+lreg_model = lreg.fit(X.values.reshape(-1,1), y) # 주의
+lreg_model.score(X.values.reshape(-1,1), y) # 예측 결정 계수.
+import matplotlib.pyplot as plt
+# ------------------------------ matplotlib으로 시각화
+fig = plt.figure(figsize=(16, 8))
+X = df["X"]
+y = df["Y"]
+plt.plot(X,lreg_model.predict(X.values.reshape(-1,1)))
+plt.plot(X, y, 'o')
+plt.xlabel("Time")
+plt.ylabel("Outpatient_Satisfaction_Score")
+plt.show()
+
+# ------------------------------ 그렇다면 기울기/절편
+print( "기울기 : ", lreg_model.coef_ )
+print( "절편 : ", lreg_model.intercept_ )
+
+# ------------------------------ 새로운 X 값을 넣어 y값을 예측
+x_input = 11 # 온도
+predicted = lreg_model.predict([[x_input]])
+print( "시간 11 분일 경우 : ", predicted) # 기울기
